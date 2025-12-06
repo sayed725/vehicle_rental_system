@@ -1,9 +1,18 @@
 import { pool } from "../../config/db";
+import bcrypt from "bcryptjs";
 
 interface UpdateUser {
   name?: string;
   email?: string;
   phone?: string;
+  role?: "admin" | "customer";
+}
+
+interface IUser {
+  name: string;
+  email: string;
+  password: string;
+  phone: string;
   role?: "admin" | "customer";
 }
 
@@ -17,30 +26,91 @@ const getSingleUser = async (id: string) => {
   return result;
 };
 
+const updateUser = async (payload: Partial<IUser>, id: string) => {
+  const { name, email, password, phone, role } = payload;
 
-const updateUser = async (payload: Record<string, unknown>, id: string) => {
-  const { name, email, phone, role } = payload as UpdateUser;
+  // Build dynamic SET clause and values array
+  const updates: string[] = [];
+  const values: any[] = [];
+  let paramIndex = 1;
 
-  const lowerCaseEmail = email?.toLowerCase();
-
-  if ( role && role !== "admin" && role !== "customer") {
-    throw new Error("Role must be either 'admin' or 'customer'");
+  if (name !== undefined) {
+    updates.push(`name = $${paramIndex++}`);
+    values.push(name);
   }
 
-  // console.log("Updating user with ID:", id, "with data:", payload);
+  if (email !== undefined) {
+    const lowerCaseEmail = email.toLowerCase();
+    updates.push(`email = $${paramIndex++}`);
+    values.push(lowerCaseEmail);
+  }
+
+  if (password !== undefined) {
+    if (password.length < 6) {
+      throw new Error("Password must be at least 6 characters long");
+    }
+    const hashedPass = await bcrypt.hash(password, 10);
+    updates.push(`password = $${paramIndex++}`);
+    values.push(hashedPass);
+  }
+
+  if (phone !== undefined) {
+    updates.push(`phone = $${paramIndex++}`);
+    values.push(phone);
+  }
+
+  if (role !== undefined) {
+    if (!["admin", "customer"].includes(role)) {
+      throw new Error("Role must be either 'admin' or 'customer'");
+    }
+    updates.push(`role = $${paramIndex++}`);
+    values.push(role);
+  }
+
+  //  nothing to update
+  if (updates.length === 0) {
+    throw new Error("No fields provided to update");
+  }
+
+  //  updated_at timestamp
+  updates.push(`updated_at = NOW()`);
+
+  // last parameter is the user id
+  values.push(id);
 
   const result = await pool.query(
-    `UPDATE users SET name=$1, email=$2, phone=$3, role=$4 WHERE id=$5 RETURNING *`,
-    [name, lowerCaseEmail, phone, role, id]
+    `
+    UPDATE users
+    SET ${updates.join(", ")}
+    WHERE id = $${paramIndex}
+    RETURNING *
+  `,
+    [...values]
   );
 
-  delete result.rows[0].password
 
+  delete result.rows[0].password
+  delete result.rows[0].created_at
+  delete result.rows[0].updated_at
+
+
+  // console.log(updates);
+  // console.log(values);
+
+  return result; 
+};
+
+const deleteUser = async (id: string) => {
+  const result = await pool.query(`DELETE FROM users WHERE id=$1`, [id]);
   return result;
 };
+
+
+
 
 export const userServices = {
   getUser,
   getSingleUser,
   updateUser,
+  deleteUser
 };
