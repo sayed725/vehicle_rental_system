@@ -26,6 +26,9 @@ app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/vehicles", vehicleRoutes);
 
 
+// booking endpoints
+
+
 
 
 app.get('/', (req: Request, res: Response) => {
