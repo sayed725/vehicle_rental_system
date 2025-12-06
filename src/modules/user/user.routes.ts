@@ -11,7 +11,7 @@ const router = express.Router();
 router.get("/", auth(Roles.admin), userController.getUser)
 router.get("/:id", userController.getSingleUser)
 router.put("/:id", updateProfile(), userController.updateUser)
-router.delete("/:id", userController.deleteUser)
+router.delete("/:id", auth(Roles.admin), userController.deleteUser)
 
 
 

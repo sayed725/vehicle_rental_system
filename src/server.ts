@@ -3,6 +3,7 @@ import initDB from './config/db';
 import config from './config';
 import { authRoutes } from './modules/auth/auth.routes';
 import { userRoutes } from './modules/user/user.routes';
+import { vehicleRoutes } from './modules/vehicle/vehicle.route';
 
 const app = express()
 const port = config.port;
@@ -20,6 +21,9 @@ app.use("/api/v1/auth", authRoutes);
 
 // user endpoints
 app.use("/api/v1/users", userRoutes);
+
+// vehicle endpoints
+app.use("/api/v1/vehicles", vehicleRoutes);
 
 
 
