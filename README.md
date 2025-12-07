@@ -1,7 +1,7 @@
 # 🚙 Vehicle Rental System (Backend)
 
 A complete backend API for managing vehicles, bookings, Customers, and role-based access control.  
-Built with **Node.js**, **Express**, **TypeScript**, **PostgreSQL**, and **JWT Authentication**.
+Built with **TypeScript**, **Node.js**, **Express**, **PostgreSQL**, and **JWT Authentication**.
 
 ---
 
