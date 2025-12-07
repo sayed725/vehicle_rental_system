@@ -36,9 +36,9 @@ const getAllVehicles = async (req: Request, res: Response) => {
 };
 
 const getSingleVehicle = async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { vehicleId } = req.params;
     try {
-      const result = await vehicleServices.getSingleVehicle(id as string);
+      const result = await vehicleServices.getSingleVehicle(vehicleId as string);
       if (result.rows.length === 0) {
         return res.status(404).json({
           success: false,
@@ -60,10 +60,10 @@ const getSingleVehicle = async (req: Request, res: Response) => {
 }
 
 const updateVehicle = async (req: Request, res: Response) => {
-     // console.log(req.params.id);
-      const { id } = req.params;
+     // console.log(req.params.vehicleId);
+      const { vehicleId } = req.params;
       try {
-        const result = await vehicleServices.UpdateVehicle(req.body, id as string);
+        const result = await vehicleServices.UpdateVehicle(req.body, vehicleId as string);
     
         if (result.rows.length === 0) {
           return res.status(404).json({
@@ -88,9 +88,9 @@ const updateVehicle = async (req: Request, res: Response) => {
 
 
 const deleteVehicle = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { vehicleId } = req.params;
   try {
-    const result = await vehicleServices.deleteVehicle(id as string);
+    const result = await vehicleServices.deleteVehicle(vehicleId as string);
     if (result.rowCount === 0) {
       return res.status(404).json({
         success: false,

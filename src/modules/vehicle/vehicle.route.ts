@@ -9,9 +9,9 @@ const router = express.Router();
 
 router.post("/",auth(Roles.admin), vehicleControllers.addVehicle)
 router.get("/", vehicleControllers.getAllVehicles)
-router.get("/:id", vehicleControllers.getSingleVehicle)
-router.put("/:id", auth(Roles.admin), vehicleControllers.updateVehicle)
-router.delete("/:id", auth(Roles.admin), vehicleControllers.deleteVehicle)
+router.get("/:vehicleId", vehicleControllers.getSingleVehicle)
+router.put("/:vehicleId", auth(Roles.admin), vehicleControllers.updateVehicle)
+router.delete("/:vehicleId", auth(Roles.admin), vehicleControllers.deleteVehicle)
 
 
 

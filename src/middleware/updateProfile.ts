@@ -29,7 +29,7 @@ export const updateProfile = () => {
       }
       req.user = decoded;
 
-      const targetUserId = req.params.id;
+      const targetUserId = req.params.userId;
 
     //   console.log(targetUserId);
     //   console.log(decoded);

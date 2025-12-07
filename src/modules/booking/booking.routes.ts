@@ -3,6 +3,7 @@ import { bookingController } from './booking.controller';
 import { auth } from '../../middleware/auth';
 import config from '../../config';
 import { Roles } from '../auth/auth.constant';
+import { updateProfile } from '../../middleware/updateProfile';
 
 
 const router = express.Router();

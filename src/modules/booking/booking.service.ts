@@ -68,6 +68,7 @@ const addBooking = async (payload: Record<string, unknown>) => {
     vehicle: {
       vehicle_name: vehicle.vehicle_name,
       daily_rent_price: vehicle.daily_rent_price,
+      type: vehicle.type
     },
   };
 };

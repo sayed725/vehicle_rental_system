@@ -22,10 +22,10 @@ const getUser = async (req: Request, res: Response) => {
 }
 
 const getSingleUser = async (req: Request, res: Response) => {
-  // console.log(req.params.id);
-  const { id } = req.params;
+  // console.log(req.params.userId);
+  const { userId } = req.params;
   try {
-    const result = await userServices.getSingleUser(id as string);
+    const result = await userServices.getSingleUser(userId as string);
     if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
@@ -47,10 +47,10 @@ const getSingleUser = async (req: Request, res: Response) => {
 }
 
 const updateUser =  async (req: Request, res: Response) => {
-  // console.log(req.params.id);
-  const { id } = req.params;
+  // console.log(req.params.userId);
+  const { userId } = req.params;
   try {
-    const result = await userServices.updateUser(req.body, id as string);
+    const result = await userServices.updateUser(req.body, userId as string);
 
     if (result.rows.length === 0) {
       return res.status(404).json({
@@ -73,9 +73,9 @@ const updateUser =  async (req: Request, res: Response) => {
 }
 
 const deleteUser = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { userId } = req.params;
   try {
-    const result = await userServices.deleteUser(id as string);
+    const result = await userServices.deleteUser(userId as string);
     if (result.rowCount === 0) {
       return res.status(404).json({
         success: false,

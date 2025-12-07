@@ -9,9 +9,9 @@ const router = express.Router();
 
 // /api/v1/user
 router.get("/", auth(Roles.admin), userController.getUser)
-router.get("/:id", userController.getSingleUser)
-router.put("/:id", updateProfile(), userController.updateUser)
-router.delete("/:id", auth(Roles.admin), userController.deleteUser)
+router.get("/:userId", userController.getSingleUser)
+router.put("/:userId", updateProfile(), userController.updateUser)
+router.delete("/:userId", auth(Roles.admin), userController.deleteUser)
 
 
 
