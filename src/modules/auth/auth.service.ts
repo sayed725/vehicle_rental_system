@@ -3,7 +3,7 @@ import { pool } from "../../config/db";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-interface IUser {
+export interface IUser {
   name: string;
   email: string;
   password: string;

@@ -12,5 +12,7 @@ const router = express.Router();
 
 router.post("/", auth(Roles.admin, Roles.customer), bookingController.addBooking)
 router.get("/", auth(Roles.admin, Roles.customer), bookingController.getBooking)
+router.put("/:bookingId", auth(Roles.admin, Roles.customer), bookingController.updateBooking)
+
 
 export const bookingRoutes = router;

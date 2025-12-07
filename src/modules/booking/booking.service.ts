@@ -1,4 +1,5 @@
 import { pool } from "../../config/db";
+import { IUser } from "../auth/auth.service";
 
 const addBooking = async (payload: Record<string, unknown>) => {
   const { customer_id, vehicle_id, rent_start_date, rent_end_date } = payload;
@@ -68,33 +69,198 @@ const addBooking = async (payload: Record<string, unknown>) => {
     vehicle: {
       vehicle_name: vehicle.vehicle_name,
       daily_rent_price: vehicle.daily_rent_price,
-      type: vehicle.type
+      type: vehicle.type,
     },
   };
 };
 
 const getAllBookings = async () => {
-  const result = await pool.query(`SELECT * FROM bookings`);
-
-  delete result.rows[0].created_at;
-  delete result.rows[0].updated_at;
+  const result = await pool.query(`SELECT 
+  b.id,
+  b.customer_id,
+  b.vehicle_id,
+  b.rent_start_date,
+  b.rent_end_date,
+  b.total_price,
+  b.status,
+  json_build_object(
+    'name', c.name,
+    'email', c.email
+  ) AS customer,
+  json_build_object(
+    'vehicle_name', v.vehicle_name,
+    'registration_number', v.registration_number
+  ) AS vehicle
+FROM bookings b
+JOIN users c ON b.customer_id = c.id
+JOIN vehicles v ON b.vehicle_id = v.id;`);
 
   return result;
 };
 
 const getSingleBooking = async (customerId: string) => {
   const result = await pool.query(
-    `SELECT * FROM bookings WHERE customer_id = $1`,
+    `SELECT 
+  b.id,
+  b.customer_id,
+  b.vehicle_id,
+  b.rent_start_date,
+  b.rent_end_date,
+  b.total_price,
+  b.status,
+  json_build_object(
+    'vehicle_name', v.vehicle_name,
+    'registration_number', v.registration_number,
+    'type' , v.type
+  ) AS vehicle
+FROM bookings b
+JOIN vehicles v ON b.vehicle_id = v.id
+WHERE customer_id = $1`,
     [customerId]
   );
-
-  delete result.rows[0].created_at;
-  delete result.rows[0].updated_at;
   return result;
+};
+
+const updateBooking = async (
+  payload: Record<string, unknown>,
+  bookingId: string,
+  userId: string
+) => {
+  const { status } = payload;
+
+  const userResult = await pool.query(`SELECT * FROM users WHERE id=$1`, [
+    userId,
+  ]);
+  const user = userResult.rows[0];
+
+  const bookingResult = await pool.query(`SELECT * FROM bookings WHERE id=$1`, [
+    bookingId,
+  ]);
+  const booking = bookingResult.rows[0];
+
+  if (!user) throw new Error("User not found");
+  if (!booking) throw new Error("Booking not found");
+
+  const now = new Date();
+  const startDate = new Date(booking.rent_start_date);
+  const endDate = new Date(booking.rent_end_date);
+
+  if (!status) {
+    throw new Error("Status will be cancelled or returned");
+  }
+
+  // customer cancelled before start date
+
+  if (user.role === "customer") {
+    if (booking.customer_id !== user.id) {
+      throw new Error("You can only cancel your own bookings");
+    }
+
+    if (status !== "cancelled") {
+      throw new Error("Customers can only cancel bookings");
+    }
+
+    if (now >= startDate) {
+      throw new Error("You Cannot cancel booking after or on start date");
+    }
+
+    if (booking.status === "cancelled") {
+      throw new Error("Booking is already cancelled");
+    }
+
+    if (booking.status === "returned" || booking.status === "completed") {
+      throw new Error("You Cannot cancel a completed or returned booking");
+    }
+
+    const cancelBooking = await pool.query(
+      `UPDATE bookings 
+         SET status = 'cancelled', updated_at = NOW() 
+         WHERE id = $1 RETURNING *`,
+      [bookingId]
+    );
+
+    // console.log(booking.vehicle_id);
+
+    await pool.query(
+      `UPDATE vehicles 
+         SET availability_status = 'available', updated_at = NOW()
+         WHERE id = $1`,
+      [booking.vehicle_id]
+    );
+
+    delete cancelBooking.rows[0].created_at;
+    delete cancelBooking.rows[0].updated_at;
+
+    return {
+      success: true,
+      message: "Booking cancelled successfully",
+      data: cancelBooking.rows[0],
+    };
+  }
+
+  // admin mark returned
+
+  if (user.role === "admin") {
+    if (status !== "returned") {
+      throw new Error('Admin can only mark booking as "returned"');
+    }
+
+    if (booking.status === "returned") {
+      throw new Error("Booking is already marked as returned");
+    }
+
+    if (booking.status === "cancelled") {
+      throw new Error("Cannot return a cancelled booking");
+    }
+
+    console.log(bookingId, booking.vehicle_id);
+
+    const returnBooking = await pool.query(
+      `UPDATE bookings 
+         SET status = 'returned', updated_at = NOW() 
+         WHERE id = $1 RETURNING *`,
+      [bookingId]
+    );
+
+    const updateStatus = await pool.query(
+      `UPDATE vehicles 
+         SET availability_status = 'available', updated_at = NOW()
+         WHERE id = $1 RETURNING *`,
+      [booking.vehicle_id]
+    );
+
+    // console.log(returnedBooking, returnVehicle)
+
+    const returnedBookingData = returnBooking.rows[0];
+    const returnedVehicleData = updateStatus.rows[0];
+
+    // console.log(returnedVehicleData)
+
+    return {
+      success: true,
+      message: "Booking marked as returned. Vehicle is now available",
+      data: {
+        id: returnedBookingData.id,
+
+        customer_id: returnedBookingData.customer_id,
+        vehicle_id: returnedBookingData.vehicle_id,
+
+        rent_start_date: returnedBookingData.rent_start_date,
+        rent_end_date: returnedBookingData.rent_end_date,
+        total_price: returnedBookingData.total_price,
+        status: returnedBookingData.status,
+
+        vehicle: {
+          availability_status: returnedVehicleData.availability_status,
+        },
+      },
+    };
+  }
 };
 
 export const bookingServices = {
   addBooking,
   getAllBookings,
   getSingleBooking,
+  updateBooking,
 };
