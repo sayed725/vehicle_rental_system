@@ -1,20 +1,11 @@
 import { pool } from "../../config/db";
 
-interface IBooking {
-  customer_id: number;
-  vehicle_id: number;
-  rent_start_date: Date;
-  rent_end_date: Date;
-}
-
-const addBooking = async (payload: IBooking) => {
+const addBooking = async (payload: Record<string, unknown>) => {
   const { customer_id, vehicle_id, rent_start_date, rent_end_date } = payload;
 
   if (!customer_id || !vehicle_id || !rent_start_date || !rent_end_date) {
     throw new Error("All fields are required");
   }
-
-  let status = "";
 
   const customerInfo = await pool.query(`SELECT * FROM users WHERE id=$1`, [
     customer_id,
@@ -26,11 +17,11 @@ const addBooking = async (payload: IBooking) => {
   const vehicle = vehicleInfo.rows[0];
   const customer = customerInfo.rows[0];
 
-  if (customer.length === 0) {
+  if (!customer) {
     throw new Error("Customer not found");
   }
 
-  if (vehicle.length === 0) {
+  if (!vehicle) {
     throw new Error("Vehicle not found");
   }
 
@@ -38,26 +29,22 @@ const addBooking = async (payload: IBooking) => {
     throw new Error("Vehicle is already booked");
   }
 
-  const startDate = new Date(rent_start_date);
-  const endDate = new Date(rent_end_date);
+  const startDate = new Date(rent_start_date as string);
+  const endDate = new Date(rent_end_date as string);
 
-  if (startDate >= endDate) {
-    throw new Error("Invalid date range");
-  }
-
-
-  const number_of_days: number = Math.ceil(
-    (endDate.getTime() - startDate.getTime()) /
-      (1000 * 60 * 60 * 24)
+  const number_of_days = Math.ceil(
+    (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
   );
 
-  const total_price = Number((vehicle.daily_rate * number_of_days).toFixed(2));
+  if (isNaN(number_of_days) || number_of_days <= 0) {
+    throw new Error("Invalid rental time!");
+  }
 
-  status = "active";
+  const total_price = Number(vehicle.daily_rent_price * number_of_days);
 
-  const result = await pool.query(
-    `INSERT INTO bookings(customer_id, vehicle_id, rent_start_date, rent_end_date, total_price, status) VALUES($1, $2, $3, $4, $5, $6) RETURNING * `,
-    [customer_id, vehicle_id, startDate, endDate, total_price, status]
+  const bookingResult = await pool.query(
+    `INSERT INTO bookings(customer_id, vehicle_id, rent_start_date, rent_end_date, total_price, status) VALUES($1, $2, $3, $4, $5, 'active') RETURNING * `,
+    [customer_id, vehicle_id, startDate, endDate, total_price]
   );
 
   await pool.query(
@@ -65,7 +52,24 @@ const addBooking = async (payload: IBooking) => {
     [vehicle_id]
   );
 
-  return result;
+  const booking = bookingResult.rows[0];
+
+  return {
+    id: booking.id,
+
+    customer_id: customer.id,
+    vehicle_id: vehicle.id,
+
+    rent_start_date: booking.rent_start_date,
+    rent_end_date: booking.rent_end_date,
+    total_price: booking.total_price,
+    status: booking.status,
+
+    vehicle: {
+      vehicle_name: vehicle.vehicle_name,
+      daily_rent_price: vehicle.daily_rent_price,
+    }
+  };
 };
 
 export const bookingServices = {

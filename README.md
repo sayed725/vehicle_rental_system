@@ -67,7 +67,7 @@ Built with **TypeScript**, **Node.js**, **Express**, **PostgreSQL**, and **JWT A
 - **VerceL** (Deployment) 
 ---
 
-## Setup & Run Instructions
+## ⏩ Setup & Run Instructions
 
 ### 1️⃣ **Clone the Repository**
 
