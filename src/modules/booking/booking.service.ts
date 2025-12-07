@@ -68,10 +68,32 @@ const addBooking = async (payload: Record<string, unknown>) => {
     vehicle: {
       vehicle_name: vehicle.vehicle_name,
       daily_rent_price: vehicle.daily_rent_price,
-    }
+    },
   };
+};
+
+const getAllBookings = async () => {
+  const result = await pool.query(`SELECT * FROM bookings`);
+
+  delete result.rows[0].created_at;
+  delete result.rows[0].updated_at;
+
+  return result;
+};
+
+const getSingleBooking = async (customerId: string) => {
+  const result = await pool.query(
+    `SELECT * FROM bookings WHERE customer_id = $1`,
+    [customerId]
+  );
+
+  delete result.rows[0].created_at;
+  delete result.rows[0].updated_at;
+  return result;
 };
 
 export const bookingServices = {
   addBooking,
+  getAllBookings,
+  getSingleBooking,
 };

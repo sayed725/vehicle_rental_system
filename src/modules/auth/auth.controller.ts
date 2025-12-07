@@ -14,6 +14,7 @@ const signUpUser = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: err.message,
+      details: err,
     });
   }
 };
@@ -33,11 +34,12 @@ const signInUser = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: err.message,
+      details: err,
     });
   }
 };
 
 export const authController = {
   signUpUser,
-  signInUser
+  signInUser,
 };
