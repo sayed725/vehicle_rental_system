@@ -143,9 +143,15 @@ const UpdateVehicle = async (payload: Partial<IVehicle>, id: string) => {
 
 const deleteVehicle = async (id: string) => {
 
-   const getStatus = await pool.query(`SELECT availability_status FROM vehicles WHERE id=$1`, [id]);
+   const booking = await pool.query(`SELECT * FROM vehicles WHERE id=$1`, [id]);
 
-   if(getStatus.rows[0].availability_status === "booked"){
+   const activeBooking = booking.rows[0];
+
+   if(!activeBooking){
+    throw new Error("No Vehicles exists");
+   }
+
+   if(activeBooking.availability_status === 'booked'){
      throw new Error("Cannot delete a booked vehicle");
    }
   const result = await pool.query(`DELETE FROM vehicles WHERE id=$1 RETURNING *`, [id]);
