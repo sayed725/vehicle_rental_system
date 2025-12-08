@@ -7,7 +7,7 @@ Built with **TypeScript**, **Node.js**, **Express**, **PostgreSQL**, and **JWT A
 
 ## 🌐 Live Deployment
 
-🔗 **API Base URL:** https://coming-soon.vercel.app
+🔗 **API Base URL:** https://l2-h2-vehicle-rental-system.vercel.app
 
 ---
 
@@ -72,8 +72,8 @@ Built with **TypeScript**, **Node.js**, **Express**, **PostgreSQL**, and **JWT A
 ### 1️⃣ **Clone the Repository**
 
 ```bash
-git clone https://github.com/your-username/your-repo-name.git
-cd your-repo-name
+git clone https://github.com/sayed725/vehicle_rental_system.git
+cd vehicle_rental_system.
 ```
 
 ### 2️⃣ **Install Dependencies**
