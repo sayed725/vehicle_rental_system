@@ -118,8 +118,18 @@ JOIN vehicles v ON b.vehicle_id = v.id
 WHERE customer_id = $1`,
     [customerId]
   );
+
+  if(result.rows.length === 0){
+    throw new Error("You have no active Bookings");
+  }
+
   return result;
 };
+
+
+
+
+
 
 const updateBooking = async (
   payload: Record<string, unknown>,
@@ -143,33 +153,31 @@ const updateBooking = async (
 
   const now = new Date();
   const startDate = new Date(booking.rent_start_date);
-  const endDate = new Date(booking.rent_end_date);
+
+  // console.log(now)
+  // console.log(startDate)
 
   if (!status) {
     throw new Error("Status will be cancelled or returned");
   }
 
+  if (status !== "cancelled" && status !== "returned") {
+    throw new Error("Status must be 'cancelled' or 'returned'");
+  }
+
   // customer cancelled before start date
 
-  if (user.role === "customer") {
+  if (status === "cancelled") {
     if (booking.customer_id !== user.id) {
       throw new Error("You can only cancel your own bookings");
-    }
-
-    if (status !== "cancelled") {
-      throw new Error("Customers can only cancel bookings");
     }
 
     if (now >= startDate) {
       throw new Error("You Cannot cancel booking after or on start date");
     }
 
-    if (booking.status === "cancelled") {
-      throw new Error("Booking is already cancelled");
-    }
-
-    if (booking.status === "returned" || booking.status === "completed") {
-      throw new Error("You Cannot cancel a completed or returned booking");
+    if (booking.status === "returned" || booking.status === "cancelled") {
+      throw new Error("Booking is already cancelled or returned");
     }
 
     const cancelBooking = await pool.query(
@@ -200,20 +208,16 @@ const updateBooking = async (
 
   // admin mark returned
 
-  if (user.role === "admin") {
-    if (status !== "returned") {
-      throw new Error('Admin can only mark booking as "returned"');
+  if (status === "returned") {
+    if (user.role !== "admin") {
+      throw new Error("Only admins can mark bookings as returned");
     }
 
-    if (booking.status === "returned") {
-      throw new Error("Booking is already marked as returned");
+    if (booking.status === "returned" || booking.status === "cancelled") {
+      throw new Error("Booking is already cancelled or returned");
     }
 
-    if (booking.status === "cancelled") {
-      throw new Error("Cannot return a cancelled booking");
-    }
-
-    console.log(bookingId, booking.vehicle_id);
+    // console.log(bookingId, booking.vehicle_id);
 
     const returnBooking = await pool.query(
       `UPDATE bookings 
