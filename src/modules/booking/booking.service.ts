@@ -74,7 +74,33 @@ const addBooking = async (payload: Record<string, unknown>) => {
   };
 };
 
+const updateStatus = async () => {
+  const bookings = await pool.query(
+    `SELECT id, status, rent_end_date, vehicle_id FROM bookings`
+  );
+
+  bookings.rows.map(async (booking: any) => {
+    const today = new Date();
+    const rent_end_date = new Date(booking.rent_end_date);
+    const isExpired = today > rent_end_date;
+
+    if (isExpired) {
+      Promise.all([
+        await pool.query(`UPDATE bookings SET status=$1 WHERE id=$2`, [
+          "returned",
+          booking.id,
+        ]),
+        await pool.query(
+          `UPDATE vehicles SET availability_status=$1 WHERE id=$2`,
+          ["available", booking.vehicle_id]
+        ),
+      ]);
+    }
+  });
+};
+
 const getAllBookings = async () => {
+   await updateStatus();
   const result = await pool.query(`SELECT 
   b.id,
   b.customer_id,
@@ -99,6 +125,7 @@ JOIN vehicles v ON b.vehicle_id = v.id;`);
 };
 
 const getSingleBooking = async (customerId: string) => {
+   await updateStatus();
   const result = await pool.query(
     `SELECT 
   b.id,
