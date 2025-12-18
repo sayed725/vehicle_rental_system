@@ -6,7 +6,8 @@ import { pool } from "../config/db";
 export const updateProfile = () => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const token = req.headers.authorization;
+      const bearerToken = req.headers.authorization;
+      const token = bearerToken?.split("Bearer ")[1];
 
       if (!token) {
         throw new Error("You are not authorized");
